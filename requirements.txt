@@ -1,0 +1,6 @@
+fastapi
+sqlalchemy
+dotenv
+fastapi-users[sqlalchemy]
+uvicorn[standard]
+aiosqlite
