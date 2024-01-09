@@ -30,10 +30,10 @@ async def init_models() -> None:
         # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
         
-app.include_router(lists_router, prefix="/lists", tags=["Lists"])
 app.include_router(books_router, prefix="/books", tags=["Books"])
 app.include_router(texts_router, prefix="/texts", tags=["Texts"])
 app.include_router(comments_router, prefix="/comments", tags=["Comments"])
+# app.include_router(lists_router, prefix="/lists", tags=["Lists"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host='0.0.0.0', port=8080, reload=True, workers=3)
