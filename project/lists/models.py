@@ -10,7 +10,7 @@ class Readlist(Base):
     text_id = Column(Integer, ForeignKey('text.id'))
 
 
-class Reading(Base):
+class Finished(Base):
     __tablename__ = "finished_reading"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -18,7 +18,6 @@ class Reading(Base):
     book_id = Column(Integer, ForeignKey('book.id'))
     text_id = Column(Integer, ForeignKey('text.id'))
     is_favorite = Column(Boolean)
-    is_finished = Column(Boolean)
     
     
 class Bookmark(Base):

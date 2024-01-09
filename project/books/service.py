@@ -19,8 +19,8 @@ async def get_one_by_id(book_id: int, db: AsyncSession):
                  joinedload(Book.parts))
         .where(Book.id == book_id)
     )
-    books = books_result.scalars().unique().one()
-    return books
+    book = books_result.scalars().unique().one()
+    return book
 
 
 async def get_all(db: AsyncSession, genre_id: int = None, author_id: int = None):

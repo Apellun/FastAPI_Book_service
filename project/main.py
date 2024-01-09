@@ -24,11 +24,11 @@ app.include_router(
     tags=["Authentication"],
 )
 
-# @app.on_event("startup")
-# async def init_models() -> None:
-#     async with engine.begin() as conn:
-#         await conn.run_sync(Base.metadata.drop_all)
-#         await conn.run_sync(Base.metadata.create_all)
+@app.on_event("startup")
+async def init_models() -> None:
+    async with engine.begin() as conn:
+        # await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
         
 app.include_router(lists_router, prefix="/lists", tags=["Lists"])
 app.include_router(books_router, prefix="/books", tags=["Books"])

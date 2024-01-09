@@ -1,32 +1,43 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.exc import NoResultFound
 from fastapi.exceptions import HTTPException
-from lists.models import Readlist, Reading, Bookmark
+from lists.models import Readlist, Finished, Bookmark
 from lists.schemas import FinishedAdd, BookmarkCreate, ReadlistCreate
 
 #Finished reading
 
-async def get_finished(favorites: bool, user_id: int, db: AsyncSession):
+async def get_finished(user_id: int, db: AsyncSession, favorites: bool = None):
     if favorites:
         query = (
-        select(Reading)
+        select(Finished)
         .where(
-            Reading.user_id == user_id,
-            Reading.is_favorite == True)
+            Finished.user_id == user_id,
+            Finished.is_favorite == True)
         )
     else:
         query = (
-            select(Reading)
-            .where(Reading.user_id == user_id,
-                Reading.is_finished == True)
+            select(Finished)
+            .where(Finished.user_id == user_id,
+                Finished.is_finished == True)
         )
         
     query_result = await db.execute(query)
     finished_reading = query_result.scalars().unique().all()
     return finished_reading
 
-async def get_one(is_favorite):
-    pass
+async def get_one(db: AsyncSession, book_id = None, text_id = None):
+    if book_id:
+        query = (select(Finished)
+        .where(Finished.book_id == book_id))
+    else:
+        query = (select(Finished)
+        .where(Finished.text_id == text_id))
+            
+    finished_result = await db.execute(query)
+    finished_book = finished_result.scalars().unique().one()
+    return finished_book
+
 
 async def add_finished(new_book: FinishedAdd, user_id: int, db: AsyncSession): #TODO: check texts for publicity, record for existing
     if new_book.text_id == None and new_book.book_id == None:
@@ -34,28 +45,30 @@ async def add_finished(new_book: FinishedAdd, user_id: int, db: AsyncSession): #
     
     if not new_book.book_id:
         try:
-            if new_book.is_favorite:
-                existing_entry = await get_finished(favorites = True, )
-        except:
-            pass
-            
-        new_finished = Reading(
+            finished_book = await get_one(db, text_id=new_book.text_id)
+        except NoResultFound:
+            finished_book = Finished(
             user_id = user_id,
-            text_id=new_book.text_id,
-            is_favorite=new_book.is_favorite
-        )
+            text_id=new_book.text_id
+            )
     else:
-        new_finished = Reading(
+        try:
+            finished_book = await get_one(db, book_id=new_book.book_id)
+        except NoResultFound:
+            finished_book = Finished(
             user_id = user_id,
-            book_id=new_book.book_id,
-            is_favorite=new_book.is_favorite
-        )
+            text_id=new_book.text_id
+            )
+                    
+    if new_book.is_favorite:
+        finished_book.is_favorite = True
+    else:
+        finished_book.is_favorite = False
     
-    db.add(new_finished)
+    db.add(finished_book)
     await db.commit()
-    await db.refresh()
     
-    finished = await get_finished(False, user_id, db)
+    finished = await get_finished(user_id=user_id, db=db, favorites=False)
     return finished
     
 async def delete_finished(text_id: int, book_id: int, favorites: bool, finished: bool, user_id: int, db: AsyncSession):
@@ -64,31 +77,22 @@ async def delete_finished(text_id: int, book_id: int, favorites: bool, finished:
     if favorites == None and finished == None:
         raise HTTPException(status_code=400)
     
-    if book_id:
-        query = (delete(Reading)
-        .where(Reading.book_id == book_id,
-                Reading.user_id == user_id)
-        )
-        # query = (
-        #     select(Reading)
-        #     .where(Reading.book_id == book_id,
-        #            Reading.user_id == user_id)
-        # )
-    elif text_id:
-        query = (delete(Reading)
-        .where(Reading.text_id == text_id,
-                Reading.user_id == user_id)
-        )
-        # query = (
-        #     select(Reading)
-        #     .where(Reading.text_id == text_id,
-        #            Reading.user_id == user_id)
-        # )
+    if not book_id:
+        try:
+            query = (delete(Finished)
+            .where(Finished.text_id == text_id,
+                    Finished.user_id == user_id))
+        except:
+            pass
+    else:
+        try:
+            query = (delete(Finished)
+            .where(Finished.book_id == book_id,
+                    Finished.user_id == user_id))
+        except:
+            pass
         
     await db.execute(query)
-    # reading = query_result.scalars().unique().one()
-    
-    # await db.delete(reading)
     await db.commit()
         
 #Readlist
