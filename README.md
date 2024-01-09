@@ -90,7 +90,6 @@ uvicorn main:app
 (в процессе написания)
 ### /texts
 
-<b>/</b> \
 <b>GET</b>
 <b>POST</b>
 
@@ -106,7 +105,6 @@ uvicorn main:app
 
 ### /books
 
-<b>/</b> \
 <b>GET</b>
 <b>POST</b>
 
